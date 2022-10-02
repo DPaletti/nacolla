@@ -1,0 +1,6 @@
+pyrightconfig.json
+launch.json
+poetry.lock
+.python-version
+.projectile
+nacolla/__pycache__/
