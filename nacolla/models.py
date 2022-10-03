@@ -16,6 +16,7 @@ class ImmutableModel(BaseModel):
         arbitrary_types_allowed = True
         copy_on_model_validation = "deep"
         smart_union = True
+        underscore_attrs_are_private = True
 
 
 class GenericImmutableModel(GenericModel):
@@ -31,3 +32,4 @@ class GenericImmutableModel(GenericModel):
         arbitrary_types_allowed = True
         copy_on_model_validation = "deep"
         smart_union = True
+        underscore_attrs_are_private = True
