@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, get_args
+from typing import Type, TypeVar, Union, get_args
 
 from nacolla.models import ImmutableModel
 from nacolla.step import Step
@@ -48,5 +48,9 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
     next_dispatch.register(s2.next)
 
     return Step[Union[_T, _P], Union[_S, _Q]](
-        apply=apply_dispatch, next=next_dispatch, name=s1.name + "_" + s2.name
+        apply=apply_dispatch,
+        next=next_dispatch,
+        name=s1.name + "_" + s2.name,
+        input_interface=Union[s1.input_interface, s2.input_interface],  # type: ignore
+        output_interface=Union[s1.output_interface, s2.output_interface],  # type: ignore
     )

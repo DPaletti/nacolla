@@ -1,10 +1,15 @@
 from __future__ import annotations
-from typing import TypeVar, Dict, Set
-from pydantic.types import StrictFloat, StrictInt, StrictStr
+from typing import Union
 from nacolla.operations import merge
 from nacolla.step import Step
 import pytest
-from tests.mock_models import *
+from tests.mock_models import (
+    WrappedInt,
+    WrappedDict,
+    WrappedFloat,
+    WrappedSet,
+    WrappedString,
+)
 
 
 def _int_to_str(input: WrappedInt) -> WrappedString:
@@ -47,3 +52,10 @@ def test_merge_singledispatch_default_implementation():
 
     with pytest.raises(NotImplementedError):
         merged.next(WrappedSet(a_set={1, 2, 3}))  # type: ignore
+
+
+def test_merge_resulting_interface_types():
+    merged = merge(_s1, _s2)
+
+    assert merged.input_interface is Union["WrappedInt", "WrappedFloat"]
+    assert merged.output_interface is Union["WrappedString", "WrappedDict"]

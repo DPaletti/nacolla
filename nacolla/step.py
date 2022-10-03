@@ -1,6 +1,6 @@
 from __future__ import annotations
 from types import MappingProxyType
-from typing import Callable, Generic, Type, TypeVar, Union, Any
+from typing import Callable, Generic, Optional, Type, TypeVar, Union, Any
 from pydantic.fields import PrivateAttr
 
 from pydantic.types import StrictStr
@@ -20,7 +20,12 @@ class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
     _input_interface: Type[_T_contra] = PrivateAttr()
     _output_interface: Type[_S_contra] = PrivateAttr()
 
-    def __init__(self, **data: Any):
+    def __init__(
+        self,
+        input_interface: Optional[Type[_T_contra]] = None,
+        output_interface: Optional[Type[_S_contra]] = None,
+        **data: Any,
+    ):
         super().__init__(**data)
         apply_signature: inspect.Signature = inspect.signature(self.apply)
         parameters: MappingProxyType[
@@ -35,11 +40,19 @@ class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
                 + "'"
             )
 
-        self._input_interface: Type[_T_contra] = list(parameters.values())[0].annotation
+        self._input_interface: Type[_T_contra] = (
+            list(parameters.values())[0].annotation
+            if not input_interface
+            else input_interface
+        )
         if self._input_interface is inspect.Signature.empty:
             raise TypeError("Step '" + self.name + "' is missing input annotation")
 
-        self._output_interface: Type[_S_contra] = apply_signature.return_annotation
+        self._output_interface: Type[_S_contra] = (
+            apply_signature.return_annotation
+            if not output_interface
+            else output_interface
+        )
         if self._output_interface is inspect.Signature.empty:
             raise TypeError("Step '" + self.name + "' is missing output annotation")
 
