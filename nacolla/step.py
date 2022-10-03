@@ -7,18 +7,18 @@ from pydantic.types import StrictStr
 from nacolla.models import GenericImmutableModel, ImmutableModel
 import inspect
 
-_T_co = TypeVar("_T_co", bound=ImmutableModel, contravariant=True)
-_S_co = TypeVar("_S_co", bound=ImmutableModel, contravariant=True)
+_T_contra = TypeVar("_T_contra", bound=ImmutableModel, contravariant=True)
+_S_contra = TypeVar("_S_contra", bound=ImmutableModel, contravariant=True)
 
 
-class Step(GenericImmutableModel, Generic[_T_co, _S_co]):
+class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
     """A generic data transformation."""
 
-    apply: Callable[[_T_co], _S_co]
-    next: Callable[[_S_co], Union["Step[_S_co, ImmutableModel]", _S_co]]
+    apply: Callable[[_T_contra], _S_contra]
+    next: Callable[[_S_contra], Union["Step[_S_contra, ImmutableModel]", _S_contra]]
     name: StrictStr
-    _input_interface: Type[_T_co] = PrivateAttr()
-    _output_interface: Type[_S_co] = PrivateAttr()
+    _input_interface: Type[_T_contra] = PrivateAttr()
+    _output_interface: Type[_S_contra] = PrivateAttr()
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -35,11 +35,11 @@ class Step(GenericImmutableModel, Generic[_T_co, _S_co]):
                 + "'"
             )
 
-        self._input_interface: Type[_T_co] = list(parameters.values())[0].annotation
+        self._input_interface: Type[_T_contra] = list(parameters.values())[0].annotation
         if self._input_interface is inspect.Signature.empty:
             raise TypeError("Step '" + self.name + "' is missing input annotation")
 
-        self._output_interface: Type[_S_co] = apply_signature.return_annotation
+        self._output_interface: Type[_S_contra] = apply_signature.return_annotation
         if self._output_interface is inspect.Signature.empty:
             raise TypeError("Step '" + self.name + "' is missing output annotation")
 
