@@ -4,3 +4,4 @@ poetry.lock
 .python-version
 .projectile
 nacolla/__pycache__/
+nacolla/tests/__pycache__
