@@ -11,11 +11,15 @@ _T_contra = TypeVar("_T_contra", bound=ImmutableModel, contravariant=True)
 _S_contra = TypeVar("_S_contra", bound=ImmutableModel, contravariant=True)
 
 
+class End:
+    ...
+
+
 class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
     """A generic data transformation."""
 
-    apply: Callable[[_T_contra], _S_contra]
-    next: Callable[[_S_contra], Union["Step[_S_contra, ImmutableModel]", _S_contra]]
+    apply: Callable[[_T_contra], _S_contra]  # also class instances are callables
+    next: Callable[[_S_contra], Union["Step[_S_contra, ImmutableModel]", End]]
     name: StrictStr
     _input_interface: Type[_T_contra] = PrivateAttr()
     _output_interface: Type[_S_contra] = PrivateAttr()
