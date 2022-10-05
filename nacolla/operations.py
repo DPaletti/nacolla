@@ -1,7 +1,7 @@
-from typing import Type, TypeVar, Union, get_args
+from typing import TypeVar, Union, get_args
 
 from nacolla.models import ImmutableModel
-from nacolla.step import Step
+from nacolla.step import End, Stateful, Step
 from functools import singledispatch
 
 
@@ -22,8 +22,17 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
 
     def next(
         to_dispatch: Union[_S, _Q]
-    ) -> Union[Step[Union[_S, _Q], ImmutableModel], Union[_S, _Q]]:
+    ) -> Union[Step[Union[_S, _Q], ImmutableModel], Union[Union[_S, _Q], End]]:
         raise NotImplementedError
+
+    if type(s1) is Stateful or type(s2) is Stateful:
+        raise TypeError(
+            "Stateful steps cannot be merged together.\n"
+            + s1.name
+            + ("is stateful" if s1 is Stateful else "is not stateful")
+            + s2.name
+            + ("is stateful" if s2 is Stateful else "is not stateful")
+        )
 
     if s1.input_interface is s2.input_interface or set(
         get_args(s1.input_interface)

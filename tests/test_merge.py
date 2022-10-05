@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union
 from nacolla.operations import merge
-from nacolla.step import Step
+from nacolla.step import Stateful, Step
 import pytest
 from tests.mock_models import (
     WrappedInt,
@@ -59,3 +59,15 @@ def test_merge_resulting_interface_types():
 
     assert merged.input_interface is Union["WrappedInt", "WrappedFloat"]
     assert merged.output_interface is Union["WrappedString", "WrappedDict"]
+
+
+def test_merge_stateful_steps():
+    ss1: Stateful[WrappedInt, WrappedString, WrappedInt] = Stateful(
+        apply=_int_to_str,
+        next=_annotated_identity_str,
+        name="int_to_str",
+        state=WrappedInt(a_int=1),
+    )
+
+    with pytest.raises(TypeError):
+        merge(ss1, _s2)
