@@ -6,22 +6,16 @@ from pydantic.fields import PrivateAttr
 from pydantic.types import StrictStr
 from nacolla.models import GenericImmutableModel, ImmutableModel
 import inspect
-from copy import deepcopy
 
 _T_contra = TypeVar("_T_contra", bound=ImmutableModel, contravariant=True)
 _S_contra = TypeVar("_S_contra", bound=ImmutableModel, contravariant=True)
-_R = TypeVar("_R", bound=ImmutableModel)
-
-
-class End:
-    ...
 
 
 class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
-    """A stateless data transformation."""
+    """A generic data transformation."""
 
     apply: Callable[[_T_contra], _S_contra]
-    next: Callable[[_S_contra], Union["Step[_S_contra, ImmutableModel, ]", End]]
+    next: Callable[[_S_contra], Union["Step[_S_contra, ImmutableModel]", _S_contra]]
     name: StrictStr
     _input_interface: Type[_T_contra] = PrivateAttr()
     _output_interface: Type[_S_contra] = PrivateAttr()
@@ -69,17 +63,3 @@ class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
     @property
     def output_interface(self):
         return self._output_interface
-
-
-class Stateful(Step[_T_contra, _S_contra], Generic[_T_contra, _S_contra, _R]):
-    """A stateful data transformation."""
-
-    state: _R
-
-    def __init__(
-        self,
-        input_interface: Optional[Type[_T_contra]] = None,
-        output_interface: Optional[Type[_S_contra]] = None,
-        **data: Any,
-    ):
-        super().__init__(input_interface, output_interface, **data)
