@@ -29,5 +29,5 @@ def test_step_interface_inspection():
         return i
 
     s0: Step[WrappedFloat, WrappedFloat] = Step(apply=f, next=f, name="valid step")
-    assert s0.input_interface is WrappedFloat
-    assert s0.output_interface is WrappedFloat
+    assert s0.input_interface == {WrappedFloat}
+    assert s0.output_interface == {WrappedFloat}
