@@ -59,3 +59,11 @@ class Step(GenericImmutableModel, Generic[_T_contra, _S_contra]):
     @property
     def output_interface(self):
         return union_types(self._output_interface)
+
+    @property
+    def raw_input_interface(self):
+        return self._input_interface
+
+    @property
+    def raw_output_interface(self):
+        return self._output_interface

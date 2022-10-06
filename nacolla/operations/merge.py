@@ -52,6 +52,6 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
         apply=apply_dispatch,
         next=next_dispatch,
         name=s1.name + "_" + s2.name,
-        input_interface=Union[s1._input_interface, s2._input_interface],  # type: ignore
-        output_interface=Union[s1._output_interface, s2._output_interface],  # type: ignore
+        input_interface=Union[s1.raw_input_interface, s2.raw_input_interface],  # type: ignore
+        output_interface=Union[s1.raw_output_interface, s2.raw_output_interface],  # type: ignore
     )
