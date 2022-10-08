@@ -17,11 +17,19 @@ from pydantic.types import StrictStr
 from nacolla.models import GenericImmutableModel, ImmutableModel
 
 
-from nacolla.type_utilities import EventualUnion, io_interface
+from nacolla.type_utilities import io_interface
 
 
-_INPUT_INTERFACE = TypeVar("_INPUT_INTERFACE", bound=ImmutableModel)
-_OUTPUT_INTERFACE = TypeVar("_OUTPUT_INTERFACE", bound=ImmutableModel)
+_INPUT_INTERFACE = TypeVar(
+    "_INPUT_INTERFACE",
+    bound=ImmutableModel,
+    contravariant=True,
+)
+_OUTPUT_INTERFACE = TypeVar(
+    "_OUTPUT_INTERFACE",
+    bound=ImmutableModel,
+    covariant=True,
+)
 
 
 class End:
@@ -36,7 +44,7 @@ class Step(GenericImmutableModel, Generic[_INPUT_INTERFACE, _OUTPUT_INTERFACE]):
     _next: Mapping[
         Type[_OUTPUT_INTERFACE],
         Union[
-            EventualUnion["Step[_OUTPUT_INTERFACE, ImmutableModel]"],
+            "Step[_OUTPUT_INTERFACE, ImmutableModel]",
             End,
         ],
     ] = PrivateAttr()
@@ -50,7 +58,7 @@ class Step(GenericImmutableModel, Generic[_INPUT_INTERFACE, _OUTPUT_INTERFACE]):
         next: Mapping[
             Type[_OUTPUT_INTERFACE],
             Union[
-                EventualUnion["Step[_OUTPUT_INTERFACE, ImmutableModel]"],
+                "Step[_OUTPUT_INTERFACE, ImmutableModel]",
                 End,
             ],
         ],
@@ -79,7 +87,7 @@ class Step(GenericImmutableModel, Generic[_INPUT_INTERFACE, _OUTPUT_INTERFACE]):
         self,
     ) -> MappingProxyType[
         Type[_OUTPUT_INTERFACE],
-        Union[EventualUnion["Step[_OUTPUT_INTERFACE, ImmutableModel]"], End],
+        Union["Step[_OUTPUT_INTERFACE, ImmutableModel]", End],
     ]:
         return MappingProxyType(self._next)
 

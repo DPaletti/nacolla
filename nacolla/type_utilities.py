@@ -2,9 +2,7 @@ from __future__ import annotations
 from typing import (
     Any,
     Dict,
-    Generic,
     Set,
-    TypeVar,
     Union,
     Tuple,
     Callable,
@@ -12,16 +10,6 @@ from typing import (
     get_origin,
     get_type_hints,
 )
-
-
-_T = TypeVar(
-    "_T",
-    contravariant=True,
-)
-
-
-class EventualUnion(Generic[_T]):
-    ...
 
 
 def unwrap_union(to_unwrap: type) -> Set[type]:

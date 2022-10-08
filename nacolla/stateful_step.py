@@ -8,11 +8,11 @@ from nacolla.type_utilities import io_interface
 from nacolla.utilities import register
 
 
-_T = TypeVar("_T", bound=ImmutableModel)
-_S = TypeVar("_S", bound=ImmutableModel)
+_INPUT_INTERFACE = TypeVar("_INPUT_INTERFACE", bound=ImmutableModel, contravariant=True)
+_OUTPUT_INTERFACE = TypeVar("_OUTPUT_INTERFACE", bound=ImmutableModel, covariant=True)
 
 
-class StatefulStep(Generic[_T, _S]):
+class StatefulStep(Generic[_INPUT_INTERFACE, _OUTPUT_INTERFACE]):
     def __init__(self) -> None:
         self.input_interface: Set[type]
         self.output_interface: Set[type]
@@ -48,5 +48,5 @@ class StatefulStep(Generic[_T, _S]):
         self.output_interface = output_interfaces
 
     @singledispatchmethod
-    def __call__(self, input: _T) -> _S:
+    def __call__(self, input: _INPUT_INTERFACE) -> _OUTPUT_INTERFACE:
         raise NotImplementedError("Cannot handle input of type " + str(type(input)))
