@@ -1,5 +1,5 @@
-from functools import WRAPPER_UPDATES
-from typing import Tuple, Union
+from __future__ import annotations
+from typing import Any, Tuple, Union
 from nacolla.step import End, Step
 from tests.mock_models import (
     WrappedInt,
@@ -38,9 +38,9 @@ def make_counter_step() -> Step[Union[WrappedInt, WrappedFloat], WrappedInt]:
 
     counter = Counter()
 
-    return Step(
-        apply=counter,
-        next=End,
+    return Step[Union[WrappedInt, WrappedFloat], WrappedInt](
+        apply=counter.__call__,
+        next={Any: End()},
         name="counter",
         input_interface=counter.input_interface,
         output_interface=counter.output_interface,
@@ -51,8 +51,8 @@ def make_string_adder_step() -> Step[WrappedString, WrappedString]:
     adder = StringAdder()
 
     return Step(
-        apply=adder,
-        next=End,
+        apply=adder.__call__,
+        next={WrappedString: End()},
         name="adder",
         input_interface=adder.input_interface,
         output_interface=adder.output_interface,
@@ -68,11 +68,11 @@ def make_steps() -> Tuple[
     def _float_to_dict(input: WrappedFloat) -> WrappedDict:
         return WrappedDict(a_dict={"a_value": input.a_float})
 
-    _s1: Step[WrappedInt, WrappedString] = Step(
-        apply=_int_to_str, next=End, name="int_to_str"
+    _s1: Step[WrappedInt, WrappedString] = Step[WrappedInt, WrappedString](
+        apply=_int_to_str, next={WrappedString: End()}, name="int_to_str"
     )
 
     _s2: Step[WrappedFloat, WrappedDict] = Step(
-        apply=_float_to_dict, next=End, name="float_to_dict"
+        apply=_float_to_dict, next={WrappedDict: End()}, name="float_to_dict"
     )
     return _s1, _s2

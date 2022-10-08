@@ -1,10 +1,11 @@
 from __future__ import annotations
 from functools import singledispatchmethod
-from typing import Callable, Generic, Tuple, Type, TypeVar, Union
+from typing import Generic, Set, TypeVar
 import inspect
 
 from nacolla.models import ImmutableModel
-from nacolla.utilities import io_interface, register, union_types
+from nacolla.type_utilities import io_interface
+from nacolla.utilities import register
 
 
 _T = TypeVar("_T", bound=ImmutableModel)
@@ -13,9 +14,8 @@ _S = TypeVar("_S", bound=ImmutableModel)
 
 class StatefulStep(Generic[_T, _S]):
     def __init__(self) -> None:
-        self.input_interface: Type[_T]
-        self.output_interface: Type[_S]
-        self.single_dispatch_call: Callable[[_T], _S]
+        self.input_interface: Set[type]
+        self.output_interface: Set[type]
         public_methods = [
             method
             for method_name, method in inspect.getmembers(
@@ -31,22 +31,22 @@ class StatefulStep(Generic[_T, _S]):
                 + " please define the interface of your steps through public methods"
             )
 
-        input_interfaces: Tuple[type, ...] = tuple()
-        output_interfaces: Tuple[type, ...] = tuple()
+        input_interfaces: Set[type] = set()
+        output_interfaces: Set[type] = set()
         for public_method in public_methods:
-            method_input_interface: type
-            method_output_interface: type
+            method_input_interface: Set[type]
+            method_output_interface: Set[type]
             method_input_interface, method_output_interface = io_interface(
                 public_method
             )
-            input_interfaces += (method_input_interface,)
-            output_interfaces += (method_output_interface,)
+            input_interfaces |= method_input_interface
+            output_interfaces |= method_output_interface
 
-            register(self.__call__, public_method, union_types(method_input_interface))  # type: ignore
+            register(self.__call__, public_method, method_input_interface)
 
-        self.input_interface = Union[input_interfaces]  # type: ignore
-        self.output_interface = Union[output_interfaces]  # type: ignore
+        self.input_interface = input_interfaces
+        self.output_interface = output_interfaces
 
     @singledispatchmethod
-    def __call__(self, input: ImmutableModel) -> ImmutableModel:
+    def __call__(self, input: _T) -> _S:
         raise NotImplementedError("Cannot handle input of type " + str(type(input)))

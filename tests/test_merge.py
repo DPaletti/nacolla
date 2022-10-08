@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Union, cast
 from nacolla.operations import merge
-from nacolla.step import Step
 import pytest
-from nacolla.utilities import union_types
+from nacolla.type_utilities import unwrap_union
 from tests.mock_models import (
     WrappedInt,
     WrappedDict,
@@ -31,18 +30,18 @@ def test_merge_singledispatch_default_implementation():
     merged = merge(s1, s2)
 
     with pytest.raises(NotImplementedError):
-        merged.apply(WrappedSet(a_set={1, 2, 3}))  # type: ignore
+        merged(WrappedSet(a_set={1, 2, 3}))  # type: ignore
 
-    with pytest.raises(NotImplementedError):
-        merged.next(WrappedSet(a_set={1, 2, 3}))  # type: ignore
+    with pytest.raises(KeyError):
+        next(merged)[WrappedSet]  # type: ignore
 
 
 def test_merge_resulting_interface_types():
     s1, s2 = make_steps()
     merged = merge(s1, s2)
 
-    assert merged.input_interface == union_types(Union[WrappedInt, WrappedFloat])  # type: ignore
-    assert merged.output_interface == union_types(Union[WrappedString, WrappedDict])  # type: ignore
+    assert merged.input_interface == unwrap_union(Union[WrappedInt, WrappedFloat])  # type: ignore
+    assert merged.output_interface == unwrap_union(Union[WrappedString, WrappedDict])  # type: ignore
 
 
 def test_merge_resulting_transformation():
@@ -51,8 +50,8 @@ def test_merge_resulting_transformation():
 
     merged = merge(counter, str_adder)
 
-    assert merged.input_interface == union_types(Union[WrappedInt, WrappedFloat, WrappedString])  # type: ignore
-    assert merged.output_interface == union_types(Union[WrappedInt, WrappedString])  # type: ignore
+    assert merged.input_interface == unwrap_union(Union[WrappedInt, WrappedFloat, WrappedString])  # type: ignore
+    assert merged.output_interface == unwrap_union(Union[WrappedInt, WrappedString])  # type: ignore
 
     assert cast(WrappedInt, merged(WrappedInt(a_int=1))).a_int == 1
     assert cast(WrappedInt, merged(WrappedFloat(a_float=1.0))).a_int == 3

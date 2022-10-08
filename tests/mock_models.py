@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, Set
 from pydantic.types import StrictFloat, StrictInt, StrictStr
 from nacolla.models import ImmutableModel
