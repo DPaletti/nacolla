@@ -3,7 +3,7 @@ from typing import Union
 
 import pytest
 from nacolla.stateful_step import StatefulStep
-from nacolla.type_utilities import unwrap_union
+from nacolla.utilities import unwrap_union
 from tests.mock_models import WrappedFloat, WrappedInt
 from tests.mock_steps import make_counter_step
 

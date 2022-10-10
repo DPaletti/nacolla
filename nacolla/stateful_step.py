@@ -4,8 +4,7 @@ from typing import Generic, Set, TypeVar
 import inspect
 
 from nacolla.models import ImmutableModel
-from nacolla.type_utilities import io_interface
-from nacolla.utilities import register
+from nacolla.utilities import io_interface, register
 
 
 _INPUT_INTERFACE = TypeVar("_INPUT_INTERFACE", bound=ImmutableModel, contravariant=True)

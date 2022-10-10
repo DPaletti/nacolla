@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any
 import pytest
-from nacolla.type_utilities import io_interface
+from nacolla.utilities import io_interface
 
 
 def test_io_interface_multi_input():

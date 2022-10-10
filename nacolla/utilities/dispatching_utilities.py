@@ -9,8 +9,8 @@ from typing import (
 
 from nacolla.models import ImmutableModel
 
-if TYPE_CHECKING:  # pragma: no cover
-    from nacolla.step import Step
+if TYPE_CHECKING:
+    from nacolla.step import Step  # pragma: no cover
 
 
 _T = TypeVar("_T")

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union, cast
 from nacolla.operations import merge
 import pytest
-from nacolla.type_utilities import unwrap_union
+from nacolla.utilities import unwrap_union
 from tests.mock_models import (
     WrappedInt,
     WrappedDict,

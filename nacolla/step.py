@@ -17,7 +17,7 @@ from pydantic.types import StrictStr
 from nacolla.models import GenericImmutableModel, ImmutableModel
 
 
-from nacolla.type_utilities import io_interface
+from nacolla.utilities import io_interface
 
 
 _INPUT_INTERFACE = TypeVar(
