@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Tuple, Union
+from typing import Tuple, Union
 from nacolla.step import End, Step
 from tests.mock_models import (
     WrappedInt,
@@ -40,7 +40,7 @@ def make_counter_step() -> Step[Union[WrappedInt, WrappedFloat], WrappedInt]:
 
     return Step[Union[WrappedInt, WrappedFloat], WrappedInt](
         apply=counter.__call__,
-        next={Any: End()},
+        next={WrappedInt: End()},
         name="counter",
         input_interface=counter.input_interface,
         output_interface=counter.output_interface,
