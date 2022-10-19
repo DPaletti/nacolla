@@ -7,10 +7,10 @@ from tests.mock_models import (
     WrappedFloat,
     WrappedString,
 )
-from nacolla.stateful_step import StatefulStep
+from nacolla.stateful_callable import StatefulCallable, step
 
 
-class Counter(StatefulStep[Union[WrappedInt, WrappedFloat], WrappedInt]):
+class Counter(StatefulCallable[Union[WrappedInt, WrappedFloat], WrappedInt]):
     def __init__(self) -> None:
         super().__init__()
         self.counter: int = 0
@@ -24,7 +24,7 @@ class Counter(StatefulStep[Union[WrappedInt, WrappedFloat], WrappedInt]):
         return WrappedInt(a_int=self.counter)
 
 
-class StringAdder(StatefulStep[WrappedString, WrappedString]):
+class StringAdder(StatefulCallable[WrappedString, WrappedString]):
     def __init__(self) -> None:
         super().__init__()
         self.s = ""
@@ -35,28 +35,11 @@ class StringAdder(StatefulStep[WrappedString, WrappedString]):
 
 
 def make_counter_step() -> Step[Union[WrappedInt, WrappedFloat], WrappedInt]:
-
-    counter = Counter()
-
-    return Step[Union[WrappedInt, WrappedFloat], WrappedInt](
-        apply=counter.__call__,
-        next={WrappedInt: End()},
-        name="counter",
-        input_interface=counter.input_interface,
-        output_interface=counter.output_interface,
-    )
+    return step(Counter(), name="counter")
 
 
 def make_string_adder_step() -> Step[WrappedString, WrappedString]:
-    adder = StringAdder()
-
-    return Step(
-        apply=adder.__call__,
-        next={WrappedString: End()},
-        name="adder",
-        input_interface=adder.input_interface,
-        output_interface=adder.output_interface,
-    )
+    return step(StringAdder(), name="adder")
 
 
 def make_steps() -> Tuple[
@@ -69,10 +52,14 @@ def make_steps() -> Tuple[
         return WrappedDict(a_dict={"a_value": input.a_float})
 
     _s1: Step[WrappedInt, WrappedString] = Step[WrappedInt, WrappedString](
-        apply=_int_to_str, next={WrappedString: End()}, name="int_to_str"
+        apply=_int_to_str,
+        next={WrappedString: End()},
+        name="int_to_str",
     )
 
     _s2: Step[WrappedFloat, WrappedDict] = Step(
-        apply=_float_to_dict, next={WrappedDict: End()}, name="float_to_dict"
+        apply=_float_to_dict,
+        next={WrappedDict: End()},
+        name="float_to_dict",
     )
     return _s1, _s2

@@ -1,0 +1,16 @@
+{
+    "implementations":[
+        {"callable": {"module":
+                      "./resources/test_step_implementation_file.py",
+                      "name":""},
+         "name": "step1"},
+        {"callable": {"module":
+                      "./resources/test_step_implementation_file2.py",
+                      "name": "int_to_str" },
+         "name": "step2"},
+        {"callable": {"module":
+                      "./resources/test_step_implementation_file.py",
+                      "name":"A"},
+         "name": "step3"}
+    ]
+}

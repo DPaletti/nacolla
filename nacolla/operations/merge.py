@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Mapping, Type, TypeVar, Union
+from typing import Mapping, Set, Type, TypeVar, Union, cast
 from nacolla.models import ImmutableModel
 
 from nacolla.step import End, Step
@@ -30,14 +30,14 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
             + "' and '"
             + str(s2)
             + "' have overlapping input interfaces "
-            + str(s1.input_interface)
+            + str(s1.input)
             + " and "
-            + str(s2.input_interface)
+            + str(s2.input)
         )
 
     apply_dispatch = singledispatch(apply)
-    register(apply_dispatch, s1, s1.input_interface)
-    register(apply_dispatch, s2, s2.input_interface)
+    register(apply_dispatch, s1, cast(Set[type], s1.input))
+    register(apply_dispatch, s2, cast(Set[type], s2.input))
 
     merged_next: Mapping[
         Union[Type[_S], Type[_Q]],
@@ -48,9 +48,9 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
     }
 
     return Step[Union[_T, _P], Union[_S, _Q]](
+        input_interface=s1.input.union(s2.input),
+        output_interface=s1.output.union(s2.output),
         apply=apply_dispatch,
-        next=merged_next,
         name=str(s1) + "_" + str(s2),
-        input_interface=s1.input_interface.union(s2.input_interface),
-        output_interface=s1.output_interface.union(s2.output_interface),
+        next=merged_next,
     )

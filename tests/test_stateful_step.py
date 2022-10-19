@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union
 
 import pytest
-from nacolla.stateful_step import StatefulStep
+from nacolla.stateful_callable import StatefulCallable
 from nacolla.utilities import unwrap_union
 from tests.mock_models import WrappedFloat, WrappedInt
 from tests.mock_steps import make_counter_step
@@ -23,7 +23,7 @@ def test_stateful_step_from_class():
 
 
 def test_invalid_class():
-    class NoPublicMethods(StatefulStep):  # type: ignore
+    class NoPublicMethods(StatefulCallable):  # type: ignore
         def __init__(self) -> None:
             super().__init__()
 

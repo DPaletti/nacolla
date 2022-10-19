@@ -13,10 +13,6 @@ if TYPE_CHECKING:
     from nacolla.step import Step  # pragma: no cover
 
 
-_T = TypeVar("_T")
-_S = TypeVar("_S")
-
-
 _I = TypeVar("_I", bound=ImmutableModel)
 _O = TypeVar("_O", bound=ImmutableModel)
 _II = TypeVar("_II", bound=ImmutableModel)
@@ -24,7 +20,7 @@ _OO = TypeVar("_OO", bound=ImmutableModel)
 
 
 def overlapping(s1: Step[_I, _O], s2: Step[_II, _OO]) -> bool:
-    return bool(s1.input_interface.intersection(s2.input_interface))
+    return bool(s1.input.intersection(s2.input))
 
 
 def register(

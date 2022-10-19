@@ -22,6 +22,6 @@ def concatenate(
         name=str(s1),
         next=concatenated_next,
         apply=s1.__call__,
-        input_interface=s1.input_interface,
-        output_interface=s1.output_interface,
+        input_interface=s1.input,
+        output_interface=s1.output,
     )
