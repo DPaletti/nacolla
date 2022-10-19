@@ -2,7 +2,6 @@ from __future__ import annotations
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union, cast
-from pydantic.error_wrappers import ValidationError
 from pydantic.types import StrictStr
 from nacolla.models import ImmutableModel
 from importlib import import_module
