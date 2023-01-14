@@ -8,6 +8,10 @@ class WrappedString(ImmutableModel):
     a_string: StrictStr
 
 
+class WrappedEndString(ImmutableModel):
+    a_string: StrictStr
+
+
 class WrappedInt(ImmutableModel):
     a_int: StrictInt
 

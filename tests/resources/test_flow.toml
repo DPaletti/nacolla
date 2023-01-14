@@ -1,0 +1,11 @@
+root = "step1"
+
+[step1]
+WrappedInt = "step2"
+WrappedString  = ""
+
+[step2]
+WrappedString = "step3"
+
+[step3]
+WrappedString = "step3"

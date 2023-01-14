@@ -6,7 +6,6 @@ from typing import (
     Set,
     TypeVar,
 )
-
 from nacolla.models import ImmutableModel
 
 if TYPE_CHECKING:
@@ -20,21 +19,15 @@ _OO = TypeVar("_OO", bound=ImmutableModel)
 
 
 def overlapping(s1: Step[_I, _O], s2: Step[_II, _OO]) -> bool:
+    """Check whether two steps have overlapping input interface"""
     return bool(s1.input.intersection(s2.input))
 
 
 def register(
-    registar: Callable[[Any], Any],
+    registar: Callable[[Any], Any],  # must be a singledispatch callable
     to_register: Callable[[Any], Any],
     to_register_interface: Set[type],
 ) -> None:
+    """Register callable to a singledispatch registar on a given type"""
     for type_to_register in to_register_interface:
-        print(
-            "Registering: "
-            + str(to_register)
-            + " to type "
-            + str(type_to_register)
-            + " on "
-            + str(registar)
-        )
         registar.register(type_to_register)(to_register)  # type: ignore

@@ -1,8 +1,12 @@
 {
     "implementations":[
         {"callable": {"module":
-                      "./resources/test_step_implementation_file.py",
-                      "name":""},
+                      "./resources/test_step_implementation_file.py"},
+        "kwargs": {
+            "A": {
+                "prefix": "my_prefix_in_dict"
+            }
+        },
          "name": "step1"},
         {"callable": {"module":
                       "./resources/test_step_implementation_file2.py",
@@ -11,6 +15,9 @@
         {"callable": {"module":
                       "./resources/test_step_implementation_file.py",
                       "name":"A"},
+        "kwargs": {
+            "prefix": "my_prefix"
+        },
          "name": "step3"}
     ]
 }

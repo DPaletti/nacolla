@@ -7,7 +7,7 @@ from tests.mock_models import (
     WrappedFloat,
     WrappedString,
 )
-from nacolla.stateful_callable import StatefulCallable, step
+from nacolla.stateful_callable import StatefulCallable, make_stateful_step
 
 
 class Counter(StatefulCallable[Union[WrappedInt, WrappedFloat], WrappedInt]):
@@ -35,11 +35,11 @@ class StringAdder(StatefulCallable[WrappedString, WrappedString]):
 
 
 def make_counter_step() -> Step[Union[WrappedInt, WrappedFloat], WrappedInt]:
-    return step(Counter(), name="counter")
+    return make_stateful_step(Counter(), name="counter")
 
 
 def make_string_adder_step() -> Step[WrappedString, WrappedString]:
-    return step(StringAdder(), name="adder")
+    return make_stateful_step(StringAdder(), name="adder")
 
 
 def make_steps() -> Tuple[

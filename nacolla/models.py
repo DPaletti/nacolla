@@ -19,14 +19,12 @@ class ImmutableModel(BaseModel):
         underscore_attrs_are_private = True
 
 
-class GenericImmutableModel(GenericModel):
-    """Immutable Pydantic Generic Model"""
+class StepModel(GenericModel):
+    """Base model for steps"""
 
     class Config:
         validate_all = True
         extra = "forbid"
-        allow_mutation = False
-        frozen = True
         use_enum_values = True
         validate_assignment = True
         arbitrary_types_allowed = True

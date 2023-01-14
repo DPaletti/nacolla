@@ -3,21 +3,17 @@ from types import MappingProxyType
 from typing import (
     Any,
     Callable,
-    Dict,
     Generic,
     Mapping,
     Optional,
-    Set,
     Union,
-    Type,
     cast,
 )
-from pydantic.class_validators import validator
-from pydantic.types import StrictStr
-from nacolla.models import GenericImmutableModel, ImmutableModel
+from pydantic import validator, StrictStr
+from nacolla.models import StepModel, ImmutableModel
 
 
-from nacolla.utilities.generics import INPUT_INTERFACE, OUTPUT_INTERFACE
+from nacolla.utilities.generics import INPUT_INTERFACE, INTERFACE, OUTPUT_INTERFACE
 from nacolla.utilities.type_utilities import io_interface
 
 
@@ -26,54 +22,92 @@ class End:
         raise StopIteration
 
 
-class Step(GenericImmutableModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
+class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
     """A generic data transformation."""
 
     name: StrictStr
     apply: Callable[[INPUT_INTERFACE], OUTPUT_INTERFACE]
 
-    # Optional at initialization but required for the model
-    # If not passed they are assembled
+    # Optional at initialization, if not passed they get assembled
     # Access not None versions through input and output properties
-    input_interface: Optional[Set[Type[INPUT_INTERFACE]]] = None
-    output_interface: Optional[Set[Type[OUTPUT_INTERFACE]]] = None
+    input_interface: Optional[set[type[INPUT_INTERFACE]]] = None
+    output_interface: Optional[set[type[OUTPUT_INTERFACE]]] = None
 
-    next: Mapping[
-        Type[OUTPUT_INTERFACE],
-        Union[
-            "Step[OUTPUT_INTERFACE, ImmutableModel]",
-            End,
-        ],
-    ]
+    # further type specification makes pydantic recurse indefinitely
+    # this field gets assembled after their interfaces if not user provided
+    next: Optional[dict[type[OUTPUT_INTERFACE], Any]] = None
+
+    def concatenate(
+        self,
+        destination_step: Step[INTERFACE, ImmutableModel],
+        port: type[INTERFACE],
+    ):
+        """Concatenate with a destination step along a given port"""
+        # TODO: check that concatenation is possible by removing the cast and adding a typeguard
+        # to check if the port is among the outputs of this step
+        # and the inputs of the destination step
+
+        if self.next is None:
+            raise ValueError("None next found, cannot concatenate")
+
+        self.next[cast(type[OUTPUT_INTERFACE], port)] = destination_step
+
+    def __eq__(self, other: object) -> bool:
+        """Compute equality between two steps.
+        Steps with the same name are always equal"""
+
+        if not isinstance(other, Step):
+            return False
+        return self.name == other.name
 
     def __call__(self, input: INPUT_INTERFACE) -> OUTPUT_INTERFACE:
+        """Apply this step to a given input"""
+
         return self.apply(input)
 
     def __next__(
         self,
     ) -> MappingProxyType[
-        Type[OUTPUT_INTERFACE],
-        Union["Step[OUTPUT_INTERFACE, ImmutableModel]", End],
+        type[OUTPUT_INTERFACE],
+        Union[Step[OUTPUT_INTERFACE, ImmutableModel], End],
     ]:
-        return MappingProxyType(self.next)
+        """Retrieve all the next steps and their corresponding types.
+        A read-only non-none view of the next steps is returned"""
+
+        if self.next is not None:
+            return cast(
+                MappingProxyType[
+                    type[OUTPUT_INTERFACE],
+                    Union[Step[OUTPUT_INTERFACE, ImmutableModel], End],
+                ],
+                MappingProxyType(self.next),
+            )
+        raise ValueError("Found none mapping in " + str(self))
 
     def __str__(
         self,
     ):
+        """A step is fully represented by its name"""
         return self.name
 
     @property
-    def input(self) -> Set[Type[INPUT_INTERFACE]]:
-        return cast(Set[Type[INPUT_INTERFACE]], self.input_interface)
+    def input(self) -> set[type[INPUT_INTERFACE]]:
+        """Input interface"""
+
+        return cast(set[type[INPUT_INTERFACE]], self.input_interface)
 
     @property
-    def output(self) -> Set[Type[OUTPUT_INTERFACE]]:
-        return cast(Set[Type[OUTPUT_INTERFACE]], self.output_interface)
+    def output(self) -> set[type[OUTPUT_INTERFACE]]:
+        """Output interface"""
+
+        return cast(set[type[OUTPUT_INTERFACE]], self.output_interface)
 
     @validator("input_interface", "output_interface", pre=True, always=True)
     def assemble_interface(
-        cls, interface: Optional[Set[type]], values: Dict[str, Any]
-    ) -> Set[type]:
+        cls, interface: Optional[set[type]], values: dict[str, Any]
+    ) -> set[type]:
+        """Assemble i/o interface from apply's type hints"""
+
         if interface is not None:
             # interface set by user
             return interface
@@ -94,7 +128,8 @@ class Step(GenericImmutableModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
         )
 
     @validator("input_interface", "output_interface")
-    def validate_interface(cls, interface: Set[type]) -> Set[Type[ImmutableModel]]:
+    def validate_interface(cls, interface: set[type]) -> set[type[ImmutableModel]]:
+        """Validate i/o interface with regard to type hints"""
 
         if any(
             [
@@ -107,28 +142,34 @@ class Step(GenericImmutableModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
                 + "' must be either a subclass of ImmutableModel or a union of subclasses of ImmutableModel found "
                 + str(interface)
             )
-        return cast(Set[Type[ImmutableModel]], interface)
+        return cast(set[type[ImmutableModel]], interface)
 
     @validator("next")
     def validate_next(
         cls,
         to_validate: Mapping[
-            Type[ImmutableModel],
+            type[ImmutableModel],
             Union[
-                "Step[OUTPUT_INTERFACE, ImmutableModel]",
+                Step[OUTPUT_INTERFACE, ImmutableModel],
                 End,
             ],
         ],
-        values: Dict[str, Any],
+        values: dict[str, Any],
     ) -> Mapping[
-        Type[ImmutableModel],
+        type[ImmutableModel],
         Union[
-            "Step[OUTPUT_INTERFACE, ImmutableModel]",
+            Step[OUTPUT_INTERFACE, ImmutableModel],
             End,
         ],
     ]:
+        """Validate mapping to next steps with respect to interface compatibility"""
+
         if not values.get("output_interface"):
             raise ValueError("Interface parsing failed")
+
+        if to_validate is None:
+            return {output: End() for output in values["output_interface"]}
+
         Step._no_dangling_output_type(
             set(to_validate.keys()), values["output_interface"]
         )
@@ -137,8 +178,10 @@ class Step(GenericImmutableModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
 
     @staticmethod
     def _no_dangling_output_type(
-        mapped_output_types: Set[type], transformation_output_interface: Set[type]
+        mapped_output_types: set[type], transformation_output_interface: set[type]
     ) -> None:
+        """Check if the mapping contains all the output types of the step's transformation"""
+
         if not mapped_output_types == transformation_output_interface:
             raise TypeError(
                 "Output types of step transformations are '"
@@ -151,23 +194,25 @@ class Step(GenericImmutableModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
     @staticmethod
     def _no_incompatible_mapping(
         mappings: Mapping[
-            Type[OUTPUT_INTERFACE],
+            type[OUTPUT_INTERFACE],
             Union[
-                "Step[OUTPUT_INTERFACE, ImmutableModel]",
+                Step[OUTPUT_INTERFACE, ImmutableModel],
                 End,
             ],
         ]
     ) -> None:
+        """Check compatibility between input and output type in a mapping"""
+
         for in_type, step in mappings.items():
-            if type(step) is not End:
+            if not isinstance(step, End):
                 step = cast(Step[ImmutableModel, ImmutableModel], step)
-                if in_type not in step.output:
+                if in_type not in step.input:
                     raise TypeError(
                         "Output type '"
                         + str(in_type)
                         + "' is forwarded to '"
                         + str(step)
                         + "' which does not accept such input.\n It accepts only '"
-                        + str(step.input_interface)
+                        + str(step.input)
                         + "'."
                     )

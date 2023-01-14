@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Mapping, Set, Type, TypeVar, Union, cast
+from typing import TypeVar, Union, cast
 from nacolla.models import ImmutableModel
 
-from nacolla.step import End, Step
+from nacolla.step import Step
 from functools import singledispatch
 
 from nacolla.utilities import overlapping, register
@@ -36,21 +36,16 @@ def merge(s1: Step[_T, _S], s2: Step[_P, _Q]) -> Step[Union[_T, _P], Union[_S, _
         )
 
     apply_dispatch = singledispatch(apply)
-    register(apply_dispatch, s1, cast(Set[type], s1.input))
-    register(apply_dispatch, s2, cast(Set[type], s2.input))
-
-    merged_next: Mapping[
-        Union[Type[_S], Type[_Q]],
-        Union[Step[_S, ImmutableModel], Step[_Q, ImmutableModel], End],
-    ] = {
-        **next(s1),
-        **next(s2),
-    }
+    register(apply_dispatch, s1, cast(set[type], s1.input))
+    register(apply_dispatch, s2, cast(set[type], s2.input))
 
     return Step[Union[_T, _P], Union[_S, _Q]](
         input_interface=s1.input.union(s2.input),
         output_interface=s1.output.union(s2.output),
         apply=apply_dispatch,
         name=str(s1) + "_" + str(s2),
-        next=merged_next,
+        next={
+            **next(s1),
+            **next(s2),
+        },
     )

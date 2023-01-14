@@ -6,7 +6,7 @@ authors = ["DPaletti <danielepaletti98@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pydantic = "^1.10.2"
 typing-extensions = "^4.3.0"
 toml = "^0.10.2"
