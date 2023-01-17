@@ -1,4 +1,3 @@
-from __future__ import annotations
 from types import MappingProxyType
 from typing import (
     Any,
@@ -9,6 +8,7 @@ from typing import (
     Union,
     cast,
 )
+from typing_extensions import TypeGuard, Self
 from pydantic import validator, StrictStr
 from nacolla.models import StepModel, ImmutableModel
 
@@ -39,18 +39,19 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
 
     def concatenate(
         self,
-        destination_step: Step[INTERFACE, ImmutableModel],
+        destination_step: Self,
         port: type[INTERFACE],
-    ):
+    ) -> None:
         """Concatenate with a destination step along a given port"""
-        # TODO: check that concatenation is possible by removing the cast and adding a typeguard
+        # TODO: check that concatenation is possible by removing the cast and
+        # adding a typeguard
         # to check if the port is among the outputs of this step
         # and the inputs of the destination step
 
         if self.next is None:
             raise ValueError("None next found, cannot concatenate")
-
-        self.next[cast(type[OUTPUT_INTERFACE], port)] = destination_step
+        if self._is_concatenation_compatible(port, destination_step):
+            self.next[port] = destination_step
 
     def __eq__(self, other: object) -> bool:
         """Compute equality between two steps.
@@ -67,10 +68,7 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
 
     def __next__(
         self,
-    ) -> MappingProxyType[
-        type[OUTPUT_INTERFACE],
-        Union[Step[OUTPUT_INTERFACE, ImmutableModel], End],
-    ]:
+    ) -> MappingProxyType[type[OUTPUT_INTERFACE], Union[Self, End],]:
         """Retrieve all the next steps and their corresponding types.
         A read-only non-none view of the next steps is returned"""
 
@@ -78,7 +76,7 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
             return cast(
                 MappingProxyType[
                     type[OUTPUT_INTERFACE],
-                    Union[Step[OUTPUT_INTERFACE, ImmutableModel], End],
+                    Union[Self, End],
                 ],
                 MappingProxyType(self.next),
             )
@@ -89,6 +87,16 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
     ):
         """A step is fully represented by its name"""
         return self.name
+
+    def _is_concatenation_compatible(
+        self, port: type, destination_step: Self
+    ) -> TypeGuard[type[OUTPUT_INTERFACE]]:
+        if (
+            not next(self).get(cast(type[OUTPUT_INTERFACE], port))
+            or port not in destination_step.input
+        ):
+            return False
+        return True
 
     @property
     def input(self) -> set[type[INPUT_INTERFACE]]:
@@ -150,18 +158,12 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
         to_validate: Mapping[
             type[ImmutableModel],
             Union[
-                Step[OUTPUT_INTERFACE, ImmutableModel],
+                Self,
                 End,
             ],
         ],
         values: dict[str, Any],
-    ) -> Mapping[
-        type[ImmutableModel],
-        Union[
-            Step[OUTPUT_INTERFACE, ImmutableModel],
-            End,
-        ],
-    ]:
+    ) -> Mapping[type[ImmutableModel], Union[Self, End,],]:
         """Validate mapping to next steps with respect to interface compatibility"""
 
         if not values.get("output_interface"):
@@ -196,7 +198,7 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
         mappings: Mapping[
             type[OUTPUT_INTERFACE],
             Union[
-                Step[OUTPUT_INTERFACE, ImmutableModel],
+                Self,  # type: ignore (pyright signals an obscure error)
                 End,
             ],
         ]
