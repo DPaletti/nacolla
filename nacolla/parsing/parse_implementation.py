@@ -1,7 +1,6 @@
-from importlib import import_module
+import importlib.machinery
 import inspect
 from pathlib import Path
-import sys
 from types import ModuleType
 from typing import Any, Callable, Union, cast, Optional
 from typing_extensions import TypeAlias, TypeGuard
@@ -35,16 +34,9 @@ def parse_implementation(import_definition: Import) -> IMPLEMENTATION:
 
 
 def _load_module(import_definition: Import) -> ModuleType:
-    try:
-        return import_module(import_definition.module)
-    except (ModuleNotFoundError, TypeError):
-        module_path: Path = Path(import_definition.module)
-        if not module_path.exists():
-            raise ValueError("Cannot find " + import_definition.module)
-
-        sys.path.append(str(module_path.parents[0]))
-
-        return import_module(name=module_path.stem, package=str(module_path.parents[0]))
+    return importlib.machinery.SourceFileLoader(
+        Path(import_definition.module).stem, import_definition.module
+    ).load_module()
 
 
 def _retrieve_function(

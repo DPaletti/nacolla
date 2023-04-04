@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nacolla"
-version = "0.1.1"
+version = "0.1.2"
 description = "Declarative flow based programming"
 authors = ["DPaletti <danielepaletti98@gmail.com>"]
 license = "MIT"
