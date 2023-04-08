@@ -34,9 +34,13 @@ def parse_implementation(import_definition: Import) -> IMPLEMENTATION:
 
 
 def _load_module(import_definition: Import) -> ModuleType:
-    return importlib.machinery.SourceFileLoader(
-        Path(import_definition.module).stem, import_definition.module
-    ).load_module()
+    module_path = Path(import_definition.module)
+    if module_path.is_file():
+        return importlib.machinery.SourceFileLoader(
+            module_path.stem, import_definition.module
+        ).load_module()
+
+    raise ValueError("Module '" + str(import_definition.module) + "' non-existent")
 
 
 def _retrieve_function(

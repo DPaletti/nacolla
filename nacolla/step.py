@@ -52,6 +52,23 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
             raise ValueError("None next found, cannot concatenate")
         if self._is_concatenation_compatible(port, destination_step):
             self.next[port] = destination_step
+            return
+
+        raise ValueError(
+            "Concatenation between '"
+            + str(self)
+            + " ["
+            + str(self.output)
+            + "] "
+            + "' and '"
+            + str(destination_step)
+            + " ["
+            + str(destination_step.input)
+            + "]"
+            + "' along '"
+            + str(port)
+            + "' is incompatible"
+        )
 
     def __eq__(self, other: object) -> bool:
         """Compute equality between two steps.
@@ -68,7 +85,10 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
 
     def __next__(
         self,
-    ) -> MappingProxyType[type[OUTPUT_INTERFACE], Union[Self, End],]:
+    ) -> MappingProxyType[
+        type[OUTPUT_INTERFACE],
+        Union["Step[ImmutableModel, ImmutableModel]", End],
+    ]:
         """Retrieve all the next steps and their corresponding types.
         A read-only non-none view of the next steps is returned"""
 
@@ -88,15 +108,40 @@ class Step(StepModel, Generic[INPUT_INTERFACE, OUTPUT_INTERFACE]):
         """A step is fully represented by its name"""
         return self.name
 
+    def next_step(
+        self, port: type[ImmutableModel]
+    ) -> "Union[Step[ImmutableModel, ImmutableModel], End]":
+        next_mapping = next(self)
+
+        if port in next_mapping.keys():
+            return next_mapping[cast(type[OUTPUT_INTERFACE], port)]
+
+        for available_out, step in next_mapping.items():
+            if issubclass(port, available_out):
+                return step
+
+        raise ValueError(
+            "Could not find "
+            + str(type(port))
+            + " among available output types: "
+            + str(next_mapping)
+        )
+
     def _is_concatenation_compatible(
         self, port: type, destination_step: Self
     ) -> TypeGuard[type[OUTPUT_INTERFACE]]:
-        if (
-            not next(self).get(cast(type[OUTPUT_INTERFACE], port))
-            or port not in destination_step.input
-        ):
+        try:
+            self.next_step(port)
+            if port in destination_step.input:
+                return True
+
+            for destination_input in destination_step.input:
+                if issubclass(destination_input, port):
+                    return True
+
             return False
-        return True
+        except:
+            return False
 
     @property
     def input(self) -> set[type[INPUT_INTERFACE]]:

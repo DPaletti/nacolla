@@ -23,7 +23,7 @@ class Flow(Iterator[Step[ImmutableModel, ImmutableModel]], Generic[_SOURCE]):
     def __next__(self) -> Step[ImmutableModel, ImmutableModel]:
         self.__current_message = self.__current_step(self.__current_message)
         self.__current_step = self._stop(
-            next(self.__current_step)[type(self.__current_message)]
+            self.__current_step.next_step(type(self.__current_message))
         )
         return self.__current_step
 
