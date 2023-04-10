@@ -8,7 +8,7 @@ class ImmutableModel(BaseModel):
 
     class Config:
         validate_all = True
-        extra = "forbid"
+        extra = "ignore"
         allow_mutation = False
         frozen = True
         use_enum_values = True
@@ -24,7 +24,7 @@ class StepModel(GenericModel):
 
     class Config:
         validate_all = True
-        extra = "forbid"
+        extra = "ignore"
         use_enum_values = True
         validate_assignment = True
         arbitrary_types_allowed = True
